@@ -1,0 +1,29 @@
+{
+  "version": "0.0.0",
+  "scripts": {
+    "dev": "vite --host",
+    "build": "vite build --emptyOutDir",
+    "serve": "vite preview"
+  },
+  "dependencies": {
+    "@vitejs/plugin-vue-jsx": "^1.1.7",
+    "axios": "^0.21.1",
+    "element-plus": "^1.0.2-beta.62",
+    "ky": "^0.28.5",
+    "lodash-es": "^4.17.21",
+    "naive-ui": "^2.16.4",
+    "vue": "^3.1.5",
+    "vue-router": "^4.0.10"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^1.2.5",
+    "@vue/compiler-sfc": "^3.1.5",
+    "autoprefixer": "^10.3.1",
+    "less": "^4.1.1",
+    "postcss": "^8.3.6",
+    "tailwindcss": "^2.2.7",
+    "vite": "^2.4.3",
+    "vite-plugin-async-catch": "^0.1.7",
+    "vite-plugin-style-import": "^1.0.1"
+  }
+}
