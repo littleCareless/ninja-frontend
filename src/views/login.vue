@@ -1,5 +1,26 @@
 <template>
-  <n-card title="节点数据统计">
+  <n-alert title="操作步骤~" type="warning" class="setps-tip">
+    <n-h6 prefix="bar">
+      <n-text type="warning">1.请在下方选择你想使用的节点。</n-text>
+    </n-h6>
+    <n-h6 prefix="bar">
+      <n-text type="warning">2.请点击下方扫描二维码登录或者点击跳转到京东 App 登录</n-text>
+    </n-h6>
+  </n-alert>
+  <n-card title="节点选择">
+    <p>请选择你需要使用的节点</p>
+    <n-select
+      v-model:value="currentNode"
+      :options="currentList"
+      :on-update:value="updateCurrentNode"
+      :render-label="renderLabel"
+      placeholder="请选择节点"
+    >
+      <template #action>选择你使用的节点后，请点击下方按钮登录，点击按钮后回到本网站查看是否登录成功，京东的升级提示不用管。</template>
+    </n-select>
+  </n-card>
+
+  <n-card title="节点数据统计" v-if="isNodeSelect">
     <n-row>
       <n-col :span="12">
         <!-- 剩余 -->
@@ -14,32 +35,17 @@
       </n-col>
       <n-col :span="12">
         <!-- 所有cookie -->
-        <n-statistic label="总计">
-          {{allCount}}
-        </n-statistic>
+        <n-statistic label="总计">{{ allCount }}</n-statistic>
       </n-col>
     </n-row>
     <template #action>
       <n-steps :current="current" :status="currentStatus">
-        <n-step
-          title="请选择你需要使用的节点"
-          description="默认选择节点1 "
-        />
-        <n-step
-          title="请点击下方按钮登录。"
-          description="如果切换了节点 会重新更新扫码二维码"
-        />
+        <n-step title="请选择节点" description="默认选择节点1 " />
+        <n-step title="请点击登录。" description="点击扫描二维码登录" />
       </n-steps>
     </template>
   </n-card>
-  <n-card title="节点选择">
-    <p>请选择你需要使用的节点</p>
-    <n-select
-      v-model:value="currentNode"
-      :options="currentList"
-      :on-update:value="updateCurrentNode"
-    />
-  </n-card>
+
   <n-card title="扫码登录" v-if="isNodeSelect">
     <template #header-extra>余量：{{ marginCount }}</template>
     <template #default>
@@ -74,7 +80,7 @@
 </template>
 
 <script>
-import { useMessage, useNotification, useDialog, NInput, NDialog, NButton, NCard, NGrid, NGridItem, NStatistic, NCol, NRow, NSelect, NSteps, NStep } from 'naive-ui'
+import { useMessage, useNotification, useDialog, NInput, NDialog, NButton, NCard, NGrid, NGridItem, NStatistic, NCol, NRow, NSelect, NSteps, NStep, NAlert, NH6, NText } from 'naive-ui'
 import { h, onMounted, reactive, toRefs, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import ky from 'ky'
@@ -87,15 +93,18 @@ import {
   newCKLoginAPI,
   newGetQrcodeAPI,
   newGetInfoAPI,
-  newCheckLoginAPI
+  newCheckLoginAPI,
+  getNodeListAPI,
 } from '@/api/index'
 import axios from 'axios'
 const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api'
+// 请求节点列表
+import nodeList from '../assets/node.json'
 import { each } from 'lodash-es'
-import { current } from '../store/index'
+import { current, store } from '../store/index'
 export default {
   components: {
-    NInput, NDialog, NButton, NCard, NGrid, NGridItem, NStatistic, NCol, NRow, NSelect, NSteps, NStep
+    NInput, NDialog, NButton, NCard, NGrid, NGridItem, NStatistic, NCol, NRow, NSelect, NSteps, NStep, NAlert, NH6, NText
   },
   setup() {
     const dialog = useDialog()
@@ -169,31 +178,52 @@ export default {
       allCount: 40,
       allowCount: 40,
       //
-      currentNode: 0,
+      currentNode: null,
       currentList: [],
       currentInfoList: {},
-      currentStatus:  'Process' ,
-      isNodeSelect: computed(() =>{
+      currentStatus: 'Process',
+      isNodeSelect: computed(() => {
         return data.currentNode !== null
-      })
+      }),
+      nodeList: []
     })
+
     const getAllNodeInfo = async () => {
       let indexs = 1
-      each(JSON.parse(VITE_API_BASE_URL), async (item, index) => {
-        const res = await axios.get(`${item}/info`)
-        data.currentInfoList[`${item}`] = res.data.data
-        data.currentList.push({
-          label: `节点${indexs++}`,
-          value: index
+
+      each(data.nodeList, async (item, index) => {
+        console.log('item', item)
+        await axios.get(`${item}/info`).then((res) => {
+          data.currentInfoList[`${item}`] = res.data.data
+          data.currentList.push({
+            label: `节点${indexs++}`,
+            value: index,
+            allowCount: res.data.data.marginCount ?? 0,
+            allCount: res.data.data.allCount ?? 40
+          })
+        }).catch((err) => {
+          console.log('err', err)
         })
       })
     }
-    getAllNodeInfo()
+    const renderLabel = (SelectOption, selected) => {
+      console.log('select', selected)
+      console.log('SelectOption', SelectOption)
+      return h('div', {
+        style: {
+          display: 'flex',
+          justifyContent: 'space-between'
+        }
+      }, [
+        h('span', SelectOption.label ?? `节点`),
+        h('span', `可用：${SelectOption.allowCount ?? 0}`)
+      ])
+    }
     // 当节点切换的时候 切换接口请求地址 然后 重新请求数据
     const getInfo = async (reqUrl) => {
       const info = await newGetInfoAPI(reqUrl)
       console.log(info)
-      const {allCount, allowCount, marginCount, allowAdd} = info.data.data
+      const { allCount, allowCount, marginCount, allowAdd } = info.data.data
       data.marginCount = marginCount
       data.allowAdd = allowAdd
       data.allCount = allCount
@@ -201,10 +231,9 @@ export default {
     }
     const updateCurrentNode = (val) => {
       clearInterval(data.timer)
-      console.log('值更新了', val)
       data.currentNode = val
-      getInfo(JSON.parse(VITE_API_BASE_URL)[data.currentNode])
-      getQrcode(JSON.parse(VITE_API_BASE_URL)[data.currentNode])
+      getInfo(data.nodeList[data.currentNode])
+      // getQrcode(data.nodeList[data.currentNode])
     }
     const getQrcode = async (reqUrl) => {
       try {
@@ -233,7 +262,7 @@ export default {
 
     const showQrcode = async () => {
       data.qrCodeVisibility = true
-      getQrcode(JSON.parse(VITE_API_BASE_URL)[data.currentNode])
+      getQrcode(data.nodeList[data.currentNode])
     }
 
     const jumpLogin = async () => {
@@ -241,7 +270,7 @@ export default {
       window.location.href = href
     }
 
-    const ckeckLogin = async (reqUrl = JSON.parse(VITE_API_BASE_URL)[data.currentNode]) => {
+    const ckeckLogin = async (reqUrl = data.nodeList[data.currentNode]) => {
       try {
         const body = await newCheckLoginAPI(reqUrl, {
           token: data.token,
@@ -253,6 +282,7 @@ export default {
         switch (body?.data.data.errcode) {
           case 0:
             localStorage.setItem('eid', body.data.data.eid)
+            localStorage.setItem('currentNode', data.currentNode)
             // ElMessage.success(body.message)
             notification.success({
               title: "操作成功啦~!",
@@ -275,7 +305,7 @@ export default {
             break
         }
       } catch (error) {
-        console.log('error',error)
+        console.log('error', error)
         clearInterval(data.timer)
         data.waitLogin = false
       }
@@ -290,7 +320,7 @@ export default {
         data.cookie.match(/pt_pin=(.*?);/)[1]
       if (ptKey && ptPin) {
         const body = await newCKLoginAPI({ pt_key: ptKey, pt_pin: ptPin })
-        console.log('CKLogin body',body)
+        console.log('CKLogin body', body)
         if (body.code === 200 && body.data.eid) {
           localStorage.setItem('eid', body.data.eid)
           notification.success({
@@ -313,9 +343,26 @@ export default {
       }
     }
 
-    onMounted(() => {
-      getInfo(JSON.parse(VITE_API_BASE_URL)[data.currentNode])
-      // getQrcode(JSON.parse(VITE_API_BASE_URL)[data.currentNode])
+    onMounted(async () => {
+      const currentNode = localStorage.getItem('currentNode')
+      data.currentNode = currentNode ?? null
+
+      await getNodeListAPI().then(res => {
+        console.log(res)
+        data.nodeList = ['https://jdapi.52mobileweb.com/api']
+        store.nodeLists = ['https://jdapi.52mobileweb.com/api']
+        data.nodeList = res.data
+        store.nodeLists = res.data
+        getInfo(data.nodeList[data.currentNode])
+        getAllNodeInfo()
+      }).catch(err => {
+        console.log(err)
+        data.nodeList = ['https://jdapi.52mobileweb.com/api']
+        store.nodeLists = ['https://jdapi.52mobileweb.com/api']
+        getInfo(data.nodeList[data.currentNode])
+        getAllNodeInfo()
+      })
+      // getQrcode(data.nodeList[data.currentNode])
     })
 
     return {
@@ -327,13 +374,21 @@ export default {
       ckeckLogin,
       jumpLogin,
       CKLogin,
-      updateCurrentNode
+      updateCurrentNode,
+      renderLabel
     }
   },
 }
 </script>
 
 <style scoped lang="less">
+.setps-tip {
+  display: flex;
+  width: 100%;
+  ::v-deep(.n-alert-body) {
+    width: 100%;
+  }
+}
 .content {
   display: flex;
   flex-direction: column;
@@ -342,9 +397,9 @@ export default {
 }
 .qr-btns {
   display: flex;
-  align-items: center;
   flex-direction: column;
   justify-content: space-evenly;
+  align-items: center;
   gap: 10px;
   .n-button {
     width: 192px;

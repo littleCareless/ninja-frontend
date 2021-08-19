@@ -47,7 +47,7 @@
 <script>
 import {
   getUserInfoAPI, delAccountAPI, updateRemarkAPI,
-  newGetUserInfoAPI, newDelAccountAPI, newUpdateRemarkAPI,
+  newGetUserInfoAPI, newDelAccountAPI, newUpdateRemarkAPI,getNodeListAPI
 } from '@/api/index'
 import { onMounted, reactive, toRefs } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
@@ -56,7 +56,7 @@ import { useNotification, NInput, NButton, NCard } from 'naive-ui'
 import push from '../assets/push.jpg'
 const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api'
 const PUSHIMAGE = import.meta.env.VITE_PUSH_IMG || ''
-import { current } from '../store/index'
+import { store } from '../store/index'
 export default {
   components: {
     NInput, NButton, NCard,
@@ -73,22 +73,32 @@ export default {
       remark: undefined,
       push,
       PUSHIMAGE,
-      dialogVisible: true
+      dialogVisible: true,
+      nodeList: [],
+      currentNode: 0
     })
-
+    console.log('store',store)
     const getInfo = async () => {
       const eid = localStorage.getItem('eid')
       if (!eid) {
         logout()
         return
       }
-      const userInfo = await newGetUserInfoAPI(JSON.parse(VITE_API_BASE_URL)[current.value], eid)
+      console.log('nodeList',data.nodeList,data.currentNode)
+      const userInfo = await newGetUserInfoAPI(data.nodeList[data.currentNode], eid)
       console.log('getinfo', userInfo)
+      console.log('getinfo', userInfo.data.data.eid)
       if (userInfo.data.data.code === 200) {
         console.log('userInfo', userInfo)
         data.nickName = userInfo.data.data.result.nickName
         data.remark = userInfo.data.data.result.remark
         data.timestamp = new Date(userInfo.data.data.result.timestamp).toLocaleString()
+      } else if(userInfo.data.data.eid){
+        data.nickName = userInfo.data.data.nickName
+        data.remark = userInfo.data.data.remark
+        data.timestamp = new Date(userInfo.data.data.timestamp).toLocaleString()
+        console.log('如果有eid')
+        return
       } else if (!userInfo.data.code !== 200) {
         // ElMessage.error('获取用户信息失败，请重重新登录')
         notification.error({
@@ -101,7 +111,24 @@ export default {
 
     }
 
-    onMounted(getInfo)
+    onMounted(async ()=> {
+      const currentNode = localStorage.getItem('currentNode')
+      data.currentNode = currentNode
+      await getNodeListAPI().then(res => {
+        // 默认
+        data.nodeList = ['https://jdapi.52mobileweb.com/api']
+        store.nodeLists =  ['https://jdapi.52mobileweb.com/api']
+        // 从服务器获取
+        data.nodeList = res.data
+        store.nodeLists = res.data
+        getInfo()
+      }).catch(err => {
+        console.log(err)
+        data.nodeList = ['https://jdapi.52mobileweb.com/api']
+        store.nodeLists =  ['https://jdapi.52mobileweb.com/api']
+        getInfo()
+      })
+    })
 
     const logout = () => {
       localStorage.removeItem('eid')
@@ -110,7 +137,7 @@ export default {
 
     const delAccount = async () => {
       const eid = localStorage.getItem('eid')
-      const body = await newDelAccountAPI(JSON.parse(VITE_API_BASE_URL)[current.value], { eid })
+      const body = await newDelAccountAPI(data.nodeList[data.currentNode], { eid })
       console.log('delAccount', body)
       if (body.data.data.code !== 200) {
         // ElMessage.error(body.message)
@@ -138,7 +165,7 @@ export default {
     }
 
     const saveRemark = async () => {
-      const body = await newUpdateRemarkAPI(JSON.parse(VITE_API_BASE_URL)[current.value], {
+      const body = await newUpdateRemarkAPI(data.nodeList[data.currentNode], {
         eid: localStorage.getItem('eid'),
         remark: data.remark,
       })

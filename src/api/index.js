@@ -73,3 +73,8 @@ export function newUpdateRemarkAPI(reqUrl,body) {
   return axios.post(`${reqUrl}/update/remark`, body)
 }
 
+export function getNodeListAPI() {
+  return axios.get(`/assets/node.json`)
+}
+
+

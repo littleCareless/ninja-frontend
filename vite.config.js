@@ -4,7 +4,9 @@ import path from 'path'
 import { defineConfig } from 'vite'
 import AsyncCatch from 'vite-plugin-async-catch'
 import styleImport from 'vite-plugin-style-import'
+var os = require('os'), ip = '', ifaces = os.networkInterfaces() // 获取本机ip
 
+console.log(ip)
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [
@@ -17,7 +19,7 @@ export default defineConfig({
       '@': path.resolve(__dirname, 'src'),
     },
   },
-  build: {
-    outDir: '../backend/static',
-  },
+  // build: {
+    // outDir: '../backend/static',
+  // },
 })
