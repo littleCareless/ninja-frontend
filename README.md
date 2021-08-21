@@ -42,6 +42,12 @@ yarn build
 将dist产物放置网站运行目录或使用docker（nginx）
 ```
 
+- 多节点教程
+在打包产物assets内创建node.json文件 内容为
+```bash
+["节点1IP/api","节点2IP/api"] 
+```
+
 ## 更新日志
 
 [CHANGELOG](./CHANGELOG.md)
