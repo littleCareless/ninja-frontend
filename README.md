@@ -36,6 +36,12 @@ yarn dev
 yarn build
 ```
 
+- 部署
+
+```bash
+将dist产物放置网站运行目录或使用docker（nginx）
+```
+
 ## 更新日志
 
 [CHANGELOG](./CHANGELOG.md)
