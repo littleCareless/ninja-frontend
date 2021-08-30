@@ -69,7 +69,7 @@
       <span class="card-subtitle">请在下方输入您的 cookie 登录。</span>
     </template>
     <template #footer>
-      <n-input v-model="cookie" size="small" clearable placeholder="输入您的 cookie" />
+      <n-input v-model:value="cookie" size="small" clearable placeholder="输入您的 cookie" />
     </template>
     <template #action>
       <div style="text-align:right;">
@@ -81,7 +81,7 @@
 
 <script>
 import { useMessage, useNotification, useDialog, NInput, NDialog, NButton, NCard, NGrid, NGridItem, NStatistic, NCol, NRow, NSelect, NSteps, NStep, NAlert, NH6, NText } from 'naive-ui'
-import { h, onMounted, reactive, toRefs, computed } from 'vue'
+import { h,ref, onMounted, reactive, toRefs, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import ky from 'ky'
 import {
@@ -109,6 +109,7 @@ export default {
   setup() {
     const dialog = useDialog()
     const notification = useNotification()
+    const frame = ref(null)
     dialog.warning({
       title: '扫码公告',
       content: () => {
@@ -237,7 +238,7 @@ export default {
     }
     const getQrcode = async (reqUrl) => {
       try {
-        const body = await newGetQrcodeAPI(reqUrl)
+        const body = await newGetQrcodeAPI(reqUrl,navigator.userAgent)
         const { token, okl_token, cookies, QRCode, ua } = body.data.data
         data.token = token
         data.okl_token = okl_token
@@ -263,6 +264,7 @@ export default {
     const showQrcode = async () => {
       data.qrCodeVisibility = true
       getQrcode(data.nodeList[data.currentNode])
+      console.log('frame',frame)
     }
 
     const jumpLogin = async () => {
@@ -318,15 +320,19 @@ export default {
       const ptPin =
         data.cookie.match(/pt_pin=(.*?);/) &&
         data.cookie.match(/pt_pin=(.*?);/)[1]
+        console.log(data.cookie,ptKey, ptPin);
       if (ptKey && ptPin) {
-        const body = await newCKLoginAPI({ pt_key: ptKey, pt_pin: ptPin })
+        const body = await newCKLoginAPI(data.nodeList[data.currentNode], { pt_key: ptKey, pt_pin: ptPin })
         console.log('CKLogin body', body)
-        if (body.code === 200 && body.data.eid) {
-          localStorage.setItem('eid', body.data.eid)
+        if (body.code === 200 || body.data.data.eid) {
+          localStorage.setItem('eid', body.data.data.eid)
+          localStorage.setItem('currentNode', data.currentNode)
           notification.success({
             title: "操作成功啦~!",
             content: body.data.message
           })
+          router.push('/')
+          current.value = data.currentNode
         } else {
           console.log('出错1')
           notification.error({
@@ -357,8 +363,10 @@ export default {
         getAllNodeInfo()
       }).catch(err => {
         console.log(err)
-        data.nodeList = ['https://jdapi.52mobileweb.com/api']
-        store.nodeLists = ['https://jdapi.52mobileweb.com/api']
+        // data.nodeList = ['https://jdapi.52mobileweb.com/api']
+        // store.nodeLists = ['https://jdapi.52mobileweb.com/api']
+        data.nodeList = ['http://localhost:5701/api']
+        store.nodeLists = ['http://localhost:5701/api']
         getInfo(data.nodeList[data.currentNode])
         getAllNodeInfo()
       })
@@ -368,6 +376,7 @@ export default {
     return {
       ...toRefs(data),
       current,
+      frame,
       getInfo,
       getQrcode,
       showQrcode,
