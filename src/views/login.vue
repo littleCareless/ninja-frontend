@@ -1,10 +1,25 @@
 <template>
   <n-alert title="操作步骤~" type="warning" class="setps-tip">
-    <n-h6 prefix="bar">
+    <n-h6 prefix="bar" style="margin: 0 0 5px 0;">
       <n-text type="warning">1.请在下方选择你想使用的节点。</n-text>
     </n-h6>
-    <n-h6 prefix="bar">
+    <n-h6 prefix="bar" style="margin: 0 0 5px 0;">
       <n-text type="warning">2.请点击下方扫描二维码登录或者点击跳转到京东 App 登录</n-text>
+    </n-h6>
+    <n-h6 prefix="bar" style="margin: 0 0 5px 0;">
+      <n-text type="warning">如今CK有效期不长，平均1~3天，因此需要及时更新。</n-text>
+    </n-h6>
+    <n-h6 prefix="bar" style="margin: 0 0 5px 0;">
+      <n-text type="warning">PC用户建议使用开源工具<a style="color: #CCCCFF" href="https://github.com/littleCareless/JD_Get_Cookie"  target="_blank">JD_GET_COOKIE</a>获取cookie并在下方填写</n-text>
+    </n-h6>
+    <n-h6 prefix="bar" style="margin: 0 0 5px 0;">
+      <n-text type="warning">手机用户可以使用Alook浏览器登录JD官网，并在菜单-工具箱-开发者工具-Cookies中获取(Android和iPhone通用)</n-text>
+    </n-h6>
+    <n-h6 prefix="bar" style="margin: 0 0 5px 0;">
+      <n-text type="warning">扫码以及跳转app登陆已失效，请自行抓取ck然后填入下方输入框上车即可。</n-text>
+    </n-h6>
+    <n-h6 prefix="bar" style="margin: 0 0 5px 0;">
+      <n-text type="warning">建议抓取京东app的ck，格式为：pt_key=app_openAAJXXXXX;pt_pin=app_openAAJXXXXX;(注意后面的符号) </n-text>
     </n-h6>
   </n-alert>
   <n-card title="节点选择">
@@ -111,7 +126,7 @@ export default {
     const notification = useNotification()
     const frame = ref(null)
     dialog.warning({
-      title: '扫码公告',
+      title: '公告',
       content: () => {
         return h('div', [
           h('p', {
@@ -119,7 +134,7 @@ export default {
               color: 'Orange',
               textAlign: 'center',
             }
-          }, '扫码后获取到用户名即为登录成功。'),
+          }, '目前扫码已失效，请使用CK登录。CK登陆成功后自动跳转即为登陆成功。'),
           h('p', {
             style: {
               color: 'Orange',
@@ -365,8 +380,8 @@ export default {
         console.log(err)
         // data.nodeList = ['https://jdapi.52mobileweb.com/api']
         // store.nodeLists = ['https://jdapi.52mobileweb.com/api']
-        data.nodeList = ['http://localhost:5701/api']
-        store.nodeLists = ['http://localhost:5701/api']
+        data.nodeList = ['https://jdapi.52mobileweb.com/api']
+        store.nodeLists = ['https://jdapi.52mobileweb.com/api']
         getInfo(data.nodeList[data.currentNode])
         getAllNodeInfo()
       })

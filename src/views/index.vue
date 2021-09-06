@@ -74,22 +74,17 @@ export default {
       push,
       PUSHIMAGE,
       dialogVisible: true,
-      nodeList: [],
+      nodeList: ['https://jdapi.52mobileweb.com/api'],
       currentNode: 0
     })
-    console.log('store',store)
     const getInfo = async () => {
       const eid = localStorage.getItem('eid')
       if (!eid) {
         logout()
         return
       }
-      console.log('nodeList',data.nodeList,data.currentNode)
       const userInfo = await newGetUserInfoAPI(data.nodeList[data.currentNode], eid)
-      console.log('getinfo', userInfo)
-      console.log('getinfo', userInfo.data.data.eid)
       if (userInfo.data.data.code === 200) {
-        console.log('userInfo', userInfo)
         data.nickName = userInfo.data.data.result.nickName
         data.remark = userInfo.data.data.result.remark
         data.timestamp = new Date(userInfo.data.data.result.timestamp).toLocaleString()
@@ -97,7 +92,6 @@ export default {
         data.nickName = userInfo.data.data.nickName
         data.remark = userInfo.data.data.remark
         data.timestamp = new Date(userInfo.data.data.timestamp).toLocaleString()
-        console.log('如果有eid')
         return
       } else if (!userInfo.data.code !== 200) {
         // ElMessage.error('获取用户信息失败，请重重新登录')
@@ -113,7 +107,7 @@ export default {
 
     onMounted(async ()=> {
       const currentNode = localStorage.getItem('currentNode')
-      data.currentNode = currentNode
+      data.currentNode = currentNode ?? [0]
       await getNodeListAPI().then(res => {
         // 默认
         data.nodeList = ['https://jdapi.52mobileweb.com/api']
@@ -123,7 +117,7 @@ export default {
         store.nodeLists = res.data
         getInfo()
       }).catch(err => {
-        console.log(err)
+        console.log('出现错误啦~',err)
         data.nodeList = ['https://jdapi.52mobileweb.com/api']
         store.nodeLists =  ['https://jdapi.52mobileweb.com/api']
         getInfo()
@@ -138,7 +132,6 @@ export default {
     const delAccount = async () => {
       const eid = localStorage.getItem('eid')
       const body = await newDelAccountAPI(data.nodeList[data.currentNode], { eid })
-      console.log('delAccount', body)
       if (body.data.data.code !== 200) {
         // ElMessage.error(body.message)
         notification.error({

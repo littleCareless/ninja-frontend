@@ -44,8 +44,8 @@ export function newGetInfoAPI(reqUrl) {
   return axios.get(`${reqUrl}/info`)
 }
 
-export function newGetQrcodeAPI(reqUrl) {
-  return axios.get(`${reqUrl}/qrcode`)
+export function newGetQrcodeAPI(reqUrl,ua) {
+  return axios.get(`${reqUrl}/qrcode`,{params: navigator.userAgent})
 }
 
 export function newCheckLoginAPI(reqUrl, body) {
